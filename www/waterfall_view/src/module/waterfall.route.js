@@ -23,7 +23,8 @@ class WaterfallState {
             controllerAs: "w",
             template: require('./waterfall.tpl.jade'),
             name,
-            url: `/${name}`,
+            url: `/${name}?tags`,
+            reloadOnSearch: false,
             data: cfg
         };
 
@@ -32,4 +33,13 @@ class WaterfallState {
 }
 
 angular.module('waterfall_view')
-.config(['$stateProvider', 'glMenuServiceProvider', WaterfallState]);
+.config(['$stateProvider', 'glMenuServiceProvider', WaterfallState])
+.config(['$locationProvider', function($locationProvider) {
+    $locationProvider.hashPrefix('');
+}]).run([
+    '$rootScope',
+    '$location',
+    function($rootScope, $location) {
+      $rootScope.location = $location
+    }
+  ])

@@ -26,6 +26,17 @@ module.exports = function() {
             test: /\.(ttf|eot|svg|woff|woff2)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
             use: 'file-loader'
         }],
+        // rules:[
+        //     {
+        //         test: /\.(png|jpe?g|svg)$/,
+        //         use: [
+        //           {
+        //             loader: 'file-loader',
+        //             options: {},
+        //           },
+        //         ],
+        //       },
+        // ],
         extraPlugins: [
             new WebpackShellPlugin({
                 onBuildEnd:['./node_modules/.bin/pug src/app/index.jade -o buildbot_www/static/']

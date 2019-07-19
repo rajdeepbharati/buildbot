@@ -3,6 +3,15 @@
         .spinner
             i.fa.fa-circle-o-notch.fa-spin.fa-2x
             p loading
+    span(ng-show="w.all_tags.length > 0" ng-repeat="tag in w.all_tags")
+        span.builder-tag.label.clickable.label-default(ng-click="w.toggleTag(tag)" , ng-class="isTagFiltered(tag) ? 'label-success': 'label-default'")
+            | {{ tag }}
+    //- span(ng-repeat="b in w.builders")
+    //-     span(ng-show="b.tags.length == 0")
+    //-         | Tags
+    //-     span(ng-show="b.tags.length < 5", ng-repeat="tag in b.tags")
+    //-         span.builder-tag.label.clickable.label-success(ng-click="w.toggleTag(tag)")
+    //-             | {{ tag }}
     .header
         .header-content
     .content

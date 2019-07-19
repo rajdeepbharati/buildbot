@@ -98,7 +98,7 @@ class Console {
         }
 
         this.$scope.builds = (this.builds = this.dataAccessor.getBuilds({
-            property: ["got_revision"],
+            property: ["got_revision", "*"],
             limit: this.buildLimit,
             order: '-started_at'
         }));
@@ -140,7 +140,12 @@ class Console {
 
 
         for (build of Array.from(this.builds)) {
-            this.matchBuildWithChange(build);
+            let prevRev = null
+            this.matchBuildWithChange(build, prevRev);
+            // if (build.properties.reason){
+            //     console.log(build)
+            // }
+            // console.log(build)
         }
 
         this.filtered_changes = [];
@@ -330,7 +335,7 @@ class Console {
     /*
      * Match builds with a change
      */
-    matchBuildWithChange(build) {
+    matchBuildWithChange(build, prevRev) {
         let change, revision;
         const buildrequest = this.buildrequests.get(build.buildrequestid);
         if ((buildrequest == null)) {
@@ -343,14 +348,17 @@ class Console {
         if  ((buildset != null) && (buildset.sourcestamps != null)) {
             for (let sourcestamp of Array.from(buildset.sourcestamps)) {
                 change = this.changesBySSID[sourcestamp.ssid];
+                // console.log('cg', sourcestamp.ssid)
                 if (change != null) {
                     break;
                 }
             }
         }
+        // console.log('rev', build.properties.got_revision);
 
         if ((change == null) && ((build.properties != null ? build.properties.got_revision : undefined) != null)) {
             const rev = build.properties.got_revision[0];
+            // console.log('rev', rev)
             // got_revision can be per codebase or just the revision string
             if (typeof(rev) === "string") {
                 change = this.changesByRevision[rev];
@@ -373,8 +381,27 @@ class Console {
                 }
             }
         }
+        // console.log(build.properties)
+        // if(build.properties.buildername=='ports_10_14_x86_64_watcher'){
+        //     console.log('okk')
+        // }
 
         if ((change == null)) {
+            // if(build.properties.got_revision){
+            //     console.log('got rev')
+            // }else{
+                // console.log(build.properties)
+            // }
+            // if (build.properties.reason){
+            //     if (build.properties.reason[0]=='force build'){
+            //         // console.log('b', build)
+            //         revision = `unknown revision ${build.builderid}-${build.buildid}`;
+            //         prevRev = revision
+            //     }
+            // } else if (build.properties.virtual_builder_name != null) {
+            //     // console.log('ps', build.properties)
+            //     revision = prevRev
+            // }
             revision = `unknown revision ${build.builderid}-${build.buildid}`;
             change = this.makeFakeChange("unknown codebase", revision, build.started_at);
         }
@@ -499,3 +526,5 @@ angular.module('console_view', [
     'ui.router', 'ui.bootstrap', 'ngAnimate', 'guanlecoja.ui', 'bbData'])
 .config(['$stateProvider', 'glMenuServiceProvider', 'bbSettingsServiceProvider', ConsoleState])
 .controller('consoleController', ['$scope', '$q', '$window', 'dataService', 'bbSettingsService', 'resultsService', '$uibModal', '$timeout', Console]);
+
+require('./view/modal/modal.controller.js');

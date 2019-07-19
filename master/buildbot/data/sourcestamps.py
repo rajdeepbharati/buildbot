@@ -63,13 +63,38 @@ class SourceStampsEndpoint(base.Endpoint):
     isCollection = True
     pathPatterns = """
         /sourcestamps
+        /builds/n:buildid/sourcestamps
     """
     rootLinkName = 'sourcestamps'
 
     @defer.inlineCallbacks
     def get(self, resultSpec, kwargs):
+        if kwargs.get('buildid'):
+            buildid = kwargs.get('buildid')
+            sss = yield self.master.db.sourcestamps.getSourceStampsForBuild(buildid)
+        else:
+            sss = yield self.master.db.sourcestamps.getSourceStamps()
+
         return [_db2data(ssdict) for ssdict in
-            (yield self.master.db.sourcestamps.getSourceStamps())]
+            (sss)]
+
+
+# class SourceStamps4BEndpoint(base.Endpoint):
+
+#     isCollection = True
+#     pathPatterns = """
+#         /builds/n:buildid/sourcestamps2
+#     """
+#     rootLinkName = 'sourcestamps2'
+
+#     @defer.inlineCallbacks
+#     def get(self, resultSpec, kwargs):
+#         if kwargs.get('buildid'):
+#             buildid = kwargs.get('buildid')
+#             sss = yield self.master.db.sourcestamps.getSourceStampsForBuild(buildid)
+#         else:
+#             sss = yield self.master.db.sourcestamps.getSourceStampsForBuild(300)
+#         return [_db2data(ssdict) for ssdict in sss]
 
 
 class SourceStamp(base.ResourceType):

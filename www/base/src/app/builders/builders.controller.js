@@ -146,10 +146,32 @@ class Builders {
         $scope.builders = data.getBuilders();
         $scope.masters = data.getMasters();
         const workers = data.getWorkers();
+        $scope.filteredBuilders = data.getBuilders()
         let builds = null;
 
         const requeryBuilds = function() {
             $scope.builders.forEach(builder => builder.builds = []);
+
+            // $scope.filteredBuilders.forEach(builder => builder.builds = []);
+            // $scope.filteredBuilders = (function() {
+            //     var filterK = $scope.searchS
+            //     var fBuilders = $scope.filteredBuilders
+            //     if (filterK) {
+            //         return $scope.filteredBuilders.filter(bd=>{
+            //             return bd.name.toLowerCase().indexOf($scope.searchS.toLowerCase())>-1
+            //         })
+            //         // fBuilders = fBuilders.filter(function(row) {
+            //         //     return Object.keys(row).some(function(key) {
+            //         //         if(key == 'name'){
+            //         //             return (
+            //         //                 String(row[key]['name'].toLowerCase().indexOf(filterK)>-1)
+            //         //             )
+            //         //         }
+            //         //     })
+            //         // })
+            //     }
+            //     // return fBuilders
+            // })()
 
             const filteredBuilds = $filter('filter')($scope.builders, $scope.isBuilderFiltered) || [];
             let builderIds = filteredBuilds.map(builder => builder.builderid);

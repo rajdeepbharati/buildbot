@@ -34,12 +34,17 @@ var WaterfallController = (function() {
         }
         constructor($rootElement, $scope, $q, $timeout, $window, $log,
                       $uibModal, dataService, d3Service, dataProcessorService,
-                      scaleService, bbSettingsService, glTopbarContextualActionsService) {
+                      scaleService, bbSettingsService, glTopbarContextualActionsService,
+                      $location, $rootScope) {
             this.zoomPlus = this.zoomPlus.bind(this);
             this.zoomMinus = this.zoomMinus.bind(this);
             this.renderNewData = this.renderNewData.bind(this);
+            this.setTags = this.setTags.bind(this);
+            this.dost=this.dost.bind(this)            
             this.$rootElement = $rootElement;
             this.$scope = $scope;
+            this.$location = $location;
+            this.$rootScope = $rootScope;
             this.$window = $window;
             this.$log = $log;
             this.$uibModal = $uibModal;
@@ -57,6 +62,7 @@ var WaterfallController = (function() {
                 action: this.zoomMinus
             }
             ];
+            this.$scope.checkedTag = this.checkedTag = 'null'
 
             // 'waterfall' class needs to be dynamically added to the body in order
             //  to support waterfall-specific styling of the body.  (this is a bit
@@ -69,6 +75,24 @@ var WaterfallController = (function() {
             this.$scope.$on("$destroy", ()=> {
                 return body.removeClass("hundredpercent");
             });
+            console.log('kik', $location)
+            // $location.search("tags", this.$scope.checkedTag)
+            const df = function() {
+                // $location.search('tags', this.$scope.checkedTag)
+            };
+            df();
+            $scope.$watch("checkedTag", function(tags, old){
+                if(old!=null){
+                    return $location.search("tags", tags);
+                }
+            })
+            // $scope.$watch("tags_filter", function(tags, old) {
+            //     if (old != null) {
+            //         return $location.search("tags", tags);
+            //     }
+            // }
+            // , true);
+            $rootScope.$on('$locationChangeSuccess', df);    
 
             glTopbarContextualActionsService.setContextualActions(actions);
 
@@ -114,6 +138,30 @@ var WaterfallController = (function() {
             this.buildLimit = this.c.limit;
             this.$scope.builds = (this.builds = this.dataAccessor.getBuilds({limit: this.buildLimit, order: '-started_at'}));
 
+
+            this.$scope.all_tags = this.all_tags = []
+            this.$scope.tags_filter = this.tags_filter = null
+            this.$scope.checkedTag = this.checkedTag = null
+            this.toggleTag = this.toggleTag.bind(this);
+            // this.isTagFiltered = this.isTagFiltered.bind(this);
+            this.$scope.toggleTag = this.toggleTag
+            // this.$scope.isTagFiltered = this.isTagFiltered
+
+            this.$scope.getAllTags = function() {
+                const allTags = [];
+                for (let builder of Array.from(this.$scope.builders)) {
+                    // if ($scope.hasActiveMaster(builder)) {
+                        for (let tag of Array.from(builder.tags)) {
+                            if (allTags.indexOf(tag) < 0) {
+                                allTags.push(tag);
+                            }
+                        }
+                    // }
+                }
+                allTags.sort();
+                return allTags;
+            };
+
             d3Service.get().then(d3 => {
 
                 // Create a scale object
@@ -124,9 +172,41 @@ var WaterfallController = (function() {
                 this.groups = this.dataProcessorService.getGroups(this.all_builders, this.builds, this.c.threshold);
                 if (this.s.show_builders_without_builds.value) {
                     this.$scope.builders = this.all_builders;
+                    // console.log(this.$scope.builders)
+                    console.log('hoie')
                 } else {
                     this.$scope.builders = (this.builders = this.dataProcessorService.filterBuilders(this.all_builders));
+                    // console.log(this.$scope.builders)
+                    console.log('shdghsg')
                 }
+
+                // const updateTagsFilterFromLocation = function(){
+                //     this.$scope.tags_filter = $location.search()["tags"];
+                //     if (this.$scope.tags_filter == null) { this.$scope.tags_filter = []; }
+                //     if (!angular.isArray(this.$scope.tags_filter)) {
+                //         return this.$scope.tags_filter = [this.$scope.tags_filter];
+                //     }
+                // }
+                // updateTagsFilterFromLocation();
+                // this.$scope.$watch("tags_filter", function(tags, old) {
+                //     if (old != null) {
+                //         return $location.search("tags", tags);
+                //     }
+                // }
+                // , true);
+             
+                // console.log(this.$scope.builders)
+                // this.$scope.builders=this.dost
+                
+                // const tb=this.$scope.builders 
+                // this.$scope.builders = tb.filter(function(bld) {
+                //     if(bld.tags.includes("iTerm2")){
+                //         console.log('iTerm2')
+                //     }
+                //     alert('nope')
+                //     return bld.tags[1]=="10_15"
+                // })
+                // console.log('tb', this.$scope.builders)
                 // Add builder status to builders
                 this.dataProcessorService.addStatus(this.builders);
 
@@ -153,6 +233,7 @@ var WaterfallController = (function() {
                 // Update view on data change
                 this.loadingMore = false;
                 this.builds.onChange = (this.all_builders.onChange = this.renderNewData);
+                this.$rootScope.$on('$locationChangeSuccess', this.renderNewData);
 
 
                 // Lazy load builds on scroll
@@ -188,6 +269,12 @@ var WaterfallController = (function() {
                     return window.unbind('resize', resizeHandler);
                 });
             });
+        }
+
+        dost(tag1) {
+            this.$scope.builders = this.all_builders.filter(bld=>{
+                return bld.tag.includes(tag1)
+            })
         }
 
 
@@ -635,14 +722,121 @@ var WaterfallController = (function() {
             });
         }
 
-        renderNewData() {
+        // toggleTag(tag) {
+        //     const i = this.tags.indexOf(tag);
+        //     if (i < 0) {
+        //         this.tags.push(tag);
+        //     } else {
+        //         this.tags.splice(i, 1);
+        //     }
+        //     return this.refresh();
+        // }
+        // resetTags() {
+        //     this.tags = [];
+        //     return this.refresh();
+        // }
+        // refresh() {
+        //     this.$stateParams.branch = this.branch;
+        //     if (this.tags.length === 0) {
+        //         this.$stateParams.tag = undefined;
+        //     } else {
+        //         this.$stateParams.tag = this.tags;
+        //     }
+        //     this.$stateParams.result = this.result;
+    
+        //     const params = {
+        //         branch: this.$stateParams.branch,
+        //         tag: this.$stateParams.tag,
+        //         result: this.$stateParams.result
+        //     };
+            
+        //     // change URL without reloading page
+        //     this.$state.transitionTo(this.$state.current, params, {notify: false});
+        //     return this.onChange();
+        // }
+        // isBuilderDisplayed(builder) {
+        //     for (let tag of Array.from(this.tags)) {
+        //         if (builder.tags.indexOf(tag) < 0) {
+        //             return false;
+        //         }
+        //     }
+        //     return true;
+        // }
+        // isTagToggled(tag) {
+        //     return this.tags.indexOf(tag) >= 0;
+        // }
+
+        toggleTag(tag) {
+            this.$scope.checkedTag = this.checkedTag = tag
+            console.log(this.$scope.checkedTag)
+            this.$location.search()["tags", tag]
+            this.renderNewData(tag)
+        }
+
+        isTagFiltered(tag) {
+            if (this.$scope.checkedTag == null) {
+                return false
+            } else {
+                // console.log(this.$scope.all_tags)
+                this.$scope.all_tags=this.all_tags=this.$scope.all_tags.filter(t=>{
+                    // console.log(t)
+                    if (t == tag){
+                        console.log(t, tag)
+                        return true
+                    }
+                })
+            }
+        }
+
+        setTags(tg) {
+        }
+
+        renderNewData(tg) {
             this.groups = this.dataProcessorService.getGroups(this.all_builders, this.builds, this.c.threshold);
             if (this.s.show_builders_without_builds.value) {
                 this.$scope.builders = this.all_builders;
+                // console.log(this.$scope.builders)
             } else {
                 this.$scope.builders = (this.builders = this.dataProcessorService.filterBuilders(this.all_builders));
+                // console.log(this.$scope.builders)
             }
-            this.dataProcessorService.addStatus(this.builders);
+            const tb=this.$scope.builders 
+            console.log('tg', tg)
+            console.log(this.$location)
+            this.$location.search()["tags", tg]
+            // console.log('tb', tb)
+            // this.$scope.builders = tb.filter(function(bld) {
+            //     if(bld.tags.includes(tg)){
+            //         console.log('tg', tg)
+            //     }
+            //     // console.log(bld)
+            //     return bld.tags.includes(tg)
+            // })
+            let nb=[]
+            tb.forEach(element => {
+                // console.log('e', element.tags)
+                if(element.tags.includes(tg)){
+                    console.log(element, tg)
+                    nb.push(element)
+                }
+            });
+            this.$scope.builders = nb
+            console.log('ca',this.$scope.builders)
+            var all_tags = [];
+            for (let builder of Array.from(this.builders)) {
+                // if ($scope.hasActiveMaster(builder)) {
+                    for (let tag of Array.from(builder.tags)) {
+                        if (all_tags.indexOf(tag) < 0) {
+                            all_tags.push(tag);
+                            // console.log(all_tags)
+                        }
+                    }
+                // }
+            }
+            all_tags.sort();
+            this.$scope.all_tags= this.all_tags = all_tags
+            // console.log(this.all_tags)
+            this.dataProcessorService.addStatus(this.$scope.builders);
             this.render();
             return this.loadingMore = false;
         }
@@ -665,6 +859,9 @@ var WaterfallController = (function() {
             // Draw the waterfall
             this.drawBuilds();
             this.drawXAxis();
+            // console.log(this.$scope.builders)
+            // console.log(this.$scope.getAllTags())
+            
             return this.drawYAxis();
         }
     };
@@ -674,8 +871,11 @@ var WaterfallController = (function() {
 
 
 angular.module('waterfall_view', new WaterfallView())
-.controller('waterfallController', ['$rootElement', '$scope', '$q', '$timeout', '$window', '$log', '$uibModal', 'dataService', 'd3Service', 'dataProcessorService', 'scaleService', 'bbSettingsService', 'glTopbarContextualActionsService',
-                                    WaterfallController]);
+.controller('waterfallController', ['$rootElement', '$scope', '$q', '$timeout', '$window', '$log', '$uibModal', 'dataService', 'd3Service', 'dataProcessorService', 'scaleService', 'bbSettingsService', 'glTopbarContextualActionsService', '$location', '$rootScope',
+                                    WaterfallController])
+.config(['$locationProvider', function($locationProvider) {
+    $locationProvider.hashPrefix('');
+}]);
 
 require('./dataProcessor/dataProcessor.service.js');
 require('./main.module.js');

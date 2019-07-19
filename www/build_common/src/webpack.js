@@ -149,7 +149,16 @@ module.exports.createTemplateWebpackConfig = function(options) {
                 'less-loader',
                 'import-glob-loader',
             ],
-        },
+        }, 
+        // {
+        //     test: /\.(png|jpe?g)$/,
+        //     use: [
+        //       {
+        //         loader: 'file-loader',
+        //         options: {},
+        //       },
+        //     ],
+        // },
         ...extraRules
     ]};
 
