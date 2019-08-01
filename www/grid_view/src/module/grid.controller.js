@@ -252,19 +252,30 @@ class Grid {
     }
 
     refresh() {
+        let stateParamsClone = {};
+        // console.log(this.$stateParams.branch, this.branch);
         this.$stateParams.branch = this.branch;
+        stateParamsClone.branch = this.branch;
         if (this.tags.length === 0) {
             this.$stateParams.tag = undefined;
+            stateParamsClone.tag = undefined;
         } else {
             this.$stateParams.tag = this.tags;
+            stateParamsClone.tag = this.tags;
         }
         this.$stateParams.result = this.result;
+        stateParamsClone.result = this.result;
 
         const params = {
             branch: this.$stateParams.branch,
             tag: this.$stateParams.tag,
             result: this.$stateParams.result
         };
+        // const params = {
+        //     branch: this.branch,
+        //     tag: this.tags,
+        //     result: this.result
+        // }
 
         // change URL without reloading page
         this.$state.transitionTo(this.$state.current, params, {notify: false});

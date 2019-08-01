@@ -26,6 +26,7 @@
         "angular-bootstrap-multiselect": "^1.1.11",
         "angular-recursion": "^1.0.5",
         "angular-ui-bootstrap": "^2.5.6",
+        "axios": "^0.19.0",
         "bootstrap": "^3.1.1",
         "buildbot-data-js": "link:../data_module",
         "d3": "^3.5.17",

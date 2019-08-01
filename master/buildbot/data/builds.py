@@ -164,8 +164,10 @@ class BuildsEndpoint(Db2DataMixin, base.BuildNestingMixin, base.Endpoint):
                 workerid=kwargs.get('workerid'),
                 complete=complete,
                 resultSpec=resultSpec)
-            # returns properties' list
-            filters = resultSpec.popProperties()
+
+        # returns properties' list
+        filters = resultSpec.popProperties()
+
         buildscol = []
         for b in builds:
             data = yield self.db2data(b)

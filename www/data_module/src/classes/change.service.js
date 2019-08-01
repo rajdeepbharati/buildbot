@@ -8,7 +8,11 @@ class Change {
         let ChangeInstance;
         return (ChangeInstance = class ChangeInstance extends Base {
             constructor(object, endpoint) {
-                super(object, endpoint);
+                const endpoints = [
+                    'builds'    // /builds
+                ];
+
+                super(object, endpoint, endpoints);
                 let { author } = this;
                 if ((this.author == null)) {
                     author = "unknown";

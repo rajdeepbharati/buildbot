@@ -16,21 +16,90 @@ class Changelist {
 }
 
 class _changeList {
-    constructor($scope, dataUtilsService) {
+    constructor($scope, dataUtilsService, $location, $rootScope,
+        dataService, bbSettingsService) {
 
-        $scope.expandDetails = () =>
-            Array.from($scope.changes).map((change) =>
-                (change.show_details = true))
-        ;
+        $scope.settings = bbSettingsService.getSettingsGroup("Changes");
+        $scope.$watch('settings', () => bbSettingsService.save()
+        , true);
+        const buildsFetchLimit = $scope.settings.buildsFetchLimit.value;
+        const buildersFetchLimit = $scope.settings.buildersFetchLimit.value;
+        const dataAccessor = dataService.open().closeOnDestroy($scope);
+        // $scope.changes = dataAccessor.getChanges({limit: 1000, order: '-changeid'});
+        // $scope.changes.onNew = function(change) {
+        //     // console.log($scope.changes.length);
+        //     // console.log(change)
+        //     change.builds = change.getBuilds({limit: 100});
+        //     change.builds.onNew = (build) => {
+        //         console.log(change.builds.length)
+        //     }
+        // }
+        $scope.builders = dataAccessor.getBuilders({limit: buildersFetchLimit});
+        // $scope.builds = dataAccessor.getBuilds({limit: buildsFetchLimit});
+        // $scope.builds.onNew = (bld) => {
+        //     // getBuildsForChange()
+        //     // addNewBuilds(1)
+        //     // bld.loadSteps()
+        // }
 
-        $scope.collapseDetails = () =>
-            Array.from($scope.changes).map((change) =>
-                (change.show_details = false))
-        ;
+        const getBuilder = function(builderid) {
+            for (const builder of $scope.builders) {
+                if (builderid === builder.builderid) {
+                    return builder;
+                }
+            }
+        }
+
+        const addNewBuilds = function(change) {
+            $scope.change.builds.onNew = (build) => {
+                $scope.change.buildsArray.push(build);
+                $scope.change.buildersArray.push(getBuilder(build.builderid));
+            }
+        }
+
+        const getBuildsForChange = function() {
+            Array.from($scope.changes).map((change) => {
+                if (change.changeid == $location.search()['id']) {
+                    change.show_details = true;
+                    change.builds = change.getBuilds({limit: buildsFetchLimit});
+                    change.buildsArray = [];
+                    change.buildersArray = [];
+                    change.builds.onNew = (build) => {
+                        build.loadSteps();
+                        change.buildsArray.push(build);
+                        change.buildersArray.push(getBuilder(build.builderid));
+                    }
+                    console.log('cba', change.changeid, change.buildsArray, change.buildersArray);
+                }
+            });
+        }
+
+        $rootScope.$on('$locationChangeSuccess', getBuildsForChange);
+
+        $scope.expandDetails = () => {
+            Array.from($scope.changes).map(change => {
+                console.log('c', change)
+                change.show_details = true;
+                change.builds = change.getBuilds({limit: buildsFetchLimit});
+                change.buildsArray = [];
+                change.buildersArray = [];
+                change.builds.onNew = (build) => {
+                    change.buildsArray.push(build);
+                    change.buildersArray.push(getBuilder(build.builderid));
+                }
+            });
+        }
+
+        $scope.collapseDetails = () => {
+            Array.from($scope.changes).map(change => {
+                change.show_details = false;
+                $location.search({});
+            });
+        } 
     }
 }
 
 
 angular.module('common')
 .directive('changelist', [Changelist])
-.controller('_changeListController', ['$scope', 'dataUtilsService', _changeList]);
+.controller('_changeListController', ['$scope', 'dataUtilsService', '$location', '$rootScope', 'dataService', 'bbSettingsService', _changeList]);

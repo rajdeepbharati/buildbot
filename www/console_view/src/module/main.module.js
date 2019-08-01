@@ -39,7 +39,8 @@ class ConsoleState {
             template: require('./console.tpl.jade'),
             name,
             url: `/${name}`,
-            data: cfg
+            data: cfg,
+            reloadOnSearch: false
         };
 
         $stateProvider.state(state);
@@ -70,6 +71,7 @@ class Console {
         this._onChange = this._onChange.bind(this);
         this.matchBuildWithChange = this.matchBuildWithChange.bind(this);
         this.makeFakeChange = this.makeFakeChange.bind(this);
+        this.getBuildsForChange = this.getBuildsForChange.bind(this);
         this.$scope = $scope;
         this.$window = $window;
         this.$uibModal = $uibModal;
@@ -78,10 +80,13 @@ class Console {
         const settings = bbSettingsService.getSettingsGroup('Console');
         this.buildLimit = settings.buildLimit.value;
         this.changeLimit = settings.changeLimit.value;
+        this.dataService = dataService;
         this.dataAccessor = dataService.open().closeOnDestroy(this.$scope);
         this._infoIsExpanded = {};
         this.$scope.all_builders = (this.all_builders = this.dataAccessor.getBuilders());
+        // console.log(this.all_builders,this.all_builders._updated.length, typeof this.$scope.all_builders)
         this.$scope.builders = (this.builders = []);
+        // console.log('bs', this.$scope.builders)
         if (typeof Intl !== 'undefined' && Intl !== null) {
             const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
             this.strcompare = collator.compare;
@@ -105,8 +110,14 @@ class Console {
         this.changes = this.dataAccessor.getChanges({limit: this.changeLimit, order: '-changeid'});
         this.buildrequests = this.dataAccessor.getBuildrequests({limit: this.buildLimit, order: '-submitted_at'});
         this.buildsets = this.dataAccessor.getBuildsets({limit: this.buildLimit, order: '-submitted_at'});
+        console.log(this.changes, this.buildsets.length);
 
         this.builds.onChange = (this.changes.onChange = (this.buildrequests.onChange = (this.buildsets.onChange = this.onChange)));
+    }
+
+    getBuildsForChange(changeid) {
+        let builds = this.dataService.get(`changes/${changeid}/builds`, {limit: this.buildLimit});
+        return builds;
     }
 
     onChange(s) {
@@ -177,6 +188,8 @@ class Console {
                 builderids_with_builds += `.${builder.builderid}`;
             }
         }
+        // console.log(builderids_with_builds);
+        // console.log(this.last_builderids_with_builds);
 
         if (builderids_with_builds === this.last_builderids_with_builds) {
             // don't recalculate if it hasn't changed!
@@ -184,6 +197,7 @@ class Console {
         }
         // we call recursive function, which finds non-overlapping groups
         let tag_line = this._sortBuildersByTags(builders_with_builds);
+        // console.log('stl', tag_line);
         // we get a tree of builders grouped by tags
         // we now need to flatten the tree, in order to build several lines of tags
         // (each line is representing a depth in the tag tree)
@@ -262,18 +276,24 @@ class Console {
                 }
             }
         }
+        // console.log(builders_by_tags);
         const tags = [];
         for (tag in builders_by_tags) {
+            // console.log(tag);
             // we don't want the tags that are on all the builders
             builders = builders_by_tags[tag];
+            // console.log('gdp', builders)
+            // console.log(builders.length, all_builders.length);
             if (builders.length < all_builders.length) {
                 tags.push({tag, builders});
             }
         }
+        // console.log('tags', tags);
 
         // sort the tags to first look at tags with the larger number of builders
         // @FIXME maybe this is not the best method to find the best groups
         tags.sort((a, b) => b.builders.length - a.builders.length);
+        // console.log(tags);
 
         const tag_line = [];
         const chosen_builderids = {};
@@ -293,6 +313,7 @@ class Console {
                 tag_line.push(tag);
             }
         }
+        // console.log('sorted tags', tags);
 
         // some builders do not have tags, we put them in another group
         const remaining_builders = [];
@@ -301,10 +322,12 @@ class Console {
                 remaining_builders.push(builder);
             }
         }
+        // console.log('rb', remaining_builders);
 
         if (remaining_builders.length) {
             tag_line.push({tag: "", builders: remaining_builders});
         }
+        // console.log(tag_line);
 
         // if there is more than one tag in this line, we need to recurse
         if (tag_line.length > 1) {
@@ -456,6 +479,7 @@ class Console {
      *
      */
     hasExpanded() {
+        console.log('madc', typeof this.changes, this.changes.length)
         for (let change of Array.from(this.changes)) {
             if (this.infoIsExpanded(change)) {
                 return true;
