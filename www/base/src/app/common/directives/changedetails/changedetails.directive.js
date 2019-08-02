@@ -27,34 +27,17 @@ class _changeDetails {
         const dataAccessor = dataService.open().closeOnDestroy($scope);
 
         $scope.changes = dataAccessor.getChanges({limit: changesFetchLimit, order: '-changeid'});
-        // $scope.changes.onNew = function(change) {
-        //     // console.log($scope.changes.length);
-        //     // console.log(change)
-        //     change.builds = change.getBuilds({limit: 100});
-        //     change.builds.onNew = (build) => {
-        //         console.log(change.builds.length)
-        //     }
-        // }
-        $scope.builders = dataAccessor.getBuilders({limit: buildersFetchLimit});
 
-        // $scope.buildersArray = [];
-        // $scope.builders.onNew = (builder) => {
-        //     $scope.buildersArray.push(builder);
-        // }
-        // console.log($scope.buildersArray)
+        $scope.builds = dataAccessor.getBuilds({limit: buildsFetchLimit});
 
         $scope.getBuilder = function(builderid) {
+            if ($scope.builders == null) {
+                $scope.builders = dataAccessor.getBuilders({limit: buildersFetchLimit});
+            }
             for (const builder of $scope.builders) {
                 if (builderid === builder.builderid) {
                     return builder;
                 }
-            }
-        }
-
-        $scope.expandChange = function(change) {
-            if (change.changeid == $location.search()['id']) {
-                console.log('dc', change);
-                change.show_details = true;
             }
         }
 
@@ -65,6 +48,20 @@ class _changeDetails {
                 $location.search('id', $scope.change.changeid);
             }
         }
+
+        $scope.$watch('change', function(change) {
+            if (change.changeid == $location.search()['id']) {
+                change.show_details = true;
+                change.builds = change.getBuilds({limit: buildsFetchLimit});
+                change.buildsArray = [];
+                change.buildersArray = [];
+
+                change.builds.onNew = (build) => {
+                    change.buildsArray.push(build);
+                    change.buildersArray.push($scope.getBuilder(build.builderid));
+                }
+            }
+        });
 
         $scope.getResult = function(b) {
             let result;

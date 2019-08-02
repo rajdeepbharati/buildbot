@@ -140,6 +140,16 @@ class Console {
         }
 
         this.sortBuildersByTags(this.all_builders);
+        console.log('onchn', this.tag_lines);
+        for (let tl of this.tag_lines[0]) {
+            console.log(tl.tag)
+            for (let bld of this.all_builders) {
+                // console.log(bld)
+                if (bld.tags.includes(tl.tag)) {
+                    console.log('this is the tag', tl.tag)
+                }
+            }
+        }
 
         if (this.changesBySSID == null) { this.changesBySSID = {}; }
         if (this.changesByRevision == null) { this.changesByRevision = {}; }
@@ -255,6 +265,7 @@ class Console {
                 this.tag_lines.push(tag_line);
             }
         }
+        console.log('tag lines', this.tag_lines);
         return this.last_builderids_with_builds = builderids_with_builds;
     }
     /*
@@ -479,7 +490,7 @@ class Console {
      *
      */
     hasExpanded() {
-        console.log('madc', typeof this.changes, this.changes.length)
+        // console.log('madc', typeof this.changes, this.changes.length)
         for (let change of Array.from(this.changes)) {
             if (this.infoIsExpanded(change)) {
                 return true;
