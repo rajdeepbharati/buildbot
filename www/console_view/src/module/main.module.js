@@ -133,6 +133,7 @@ class Console {
         if (this.changesBySSID == null) { this.changesBySSID = {}; }
         if (this.changesByRevision == null) { this.changesByRevision = {}; }
         for (change of Array.from(this.changes)) {
+            console.log('ac', change, change.sourcestamp.ssid)
             this.changesBySSID[change.sourcestamp.ssid] = change;
             this.changesByRevision[change.revision] = change;
             this.populateChange(change);
@@ -340,12 +341,22 @@ class Console {
         if ((buildset == null)) {
             return;
         }
+        console.log(buildset)
         if  ((buildset != null) && (buildset.sourcestamps != null)) {
+            console.log('gg')
             for (let sourcestamp of Array.from(buildset.sourcestamps)) {
+                console.log('ss', sourcestamp.ssid)
+                console.log(this.changesBySSID)
                 change = this.changesBySSID[sourcestamp.ssid];
+                console.log('c', change)
                 if (change != null) {
                     break;
+                } else {
+                    // change = this.makeFakeChange("", sourcestamp.created_at, build.started_at)
                 }
+            }
+            if (change == null) {
+                change = this.makeFakeChange("", buildset.parent_buildid, build.started_at)
             }
         }
 
@@ -374,6 +385,19 @@ class Console {
             }
         }
 
+        // if ((buildset != null) && (buildset.sourcestamps != null)) {
+        //     console.log('gg')
+        //     for (let sourcestamp of Array.from(buildset.sourcestamps)) {
+        //         console.log('ss', sourcestamp.ssid)
+        //         console.log(this.changesBySSID)
+        //         change = this.changesBySSID[sourcestamp.ssid];
+        //         console.log('c', change)
+        //         if (change != null) {
+        //             break;
+        //         }
+        //     }
+        // }
+
         if ((change == null)) {
             revision = `unknown revision ${build.builderid}-${build.buildid}`;
             change = this.makeFakeChange("unknown codebase", revision, build.started_at);
@@ -383,19 +407,37 @@ class Console {
     }
 
     makeFakeChange(codebase, revision, when_timestamp) {
-        let change = this.changesBySSID[revision];
-        if ((change == null)) {
-            change = {
-                codebase,
-                revision,
-                changeid: revision,
-                when_timestamp,
-                author: `unknown author for ${revision}`,
-                comments: revision + "\n\nFake comment for revision: No change for this revision, please setup a changesource in Buildbot"
-            };
-            this.changesBySSID[revision] = change;
-            this.populateChange(change);
-        }
+        // if (ssid != null) {
+        //     // let change = this.changesBySSID[ssid]
+        //     let change
+        //     if ((change == null)) {
+        //         change = {
+        //             codebase,
+        //             ssid,
+        //             changeid: ssid,
+        //             when_timestamp,
+        //             // ssid,
+        //             author: `unknown author for ${revision}`,
+        //             comments: revision + "\n\nFake comment for revision: No change for this revision, please setup a changesource in Buildbot"
+        //         };
+        //         this.changesBySSID[ssid] = change;
+        //         this.populateChange(change);
+        //     }
+        // } else {
+            let change = this.changesBySSID[revision];
+            if ((change == null)) {
+                change = {
+                    codebase,
+                    revision,
+                    changeid: revision,
+                    when_timestamp,
+                    author: `unknown author for ${revision}`,
+                    comments: revision + "\n\nFake comment for revision: No change for this revision, please setup a changesource in Buildbot"
+                };
+                this.changesBySSID[revision] = change;
+                this.populateChange(change);
+            }
+        
         return change;
     }
     /*
