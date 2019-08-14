@@ -46,6 +46,12 @@ class Waterfall {
                 caption: 'Show old builders',
                 default_value: false
             }
+            , {
+                type: 'integer',
+                name: 'tags_limit',
+                caption: 'Number of tags to display',
+                default_value: 20
+            }
             ]});
     }
 }

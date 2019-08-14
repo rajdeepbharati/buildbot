@@ -37,6 +37,7 @@ var WaterfallController = (function() {
             this.$location = $location;
             this.$rootScope = $rootScope;
             this.$scope.tags_filter = this.tags_filter = [];
+            this.$scope.searchedTag = '';
             this.dataProcessorService = dataProcessorService;
             this.bbSettingsService = bbSettingsService;
             self = this;
@@ -99,13 +100,17 @@ var WaterfallController = (function() {
                 threshold: this.s.idle_threshold_waterfall.value,
 
                 // Grey rectangle below buildids
-                buildidBackground: this.s.number_background_waterfall.value
+                buildidBackground: this.s.number_background_waterfall.value,
+
+                // Number of tags to display
+                tags_limit: this.s.tags_limit.value
             };
 
             // Load data (builds and builders)
             this.all_builders = this.dataAccessor.getBuilders({order: 'name'});
             this.$scope.builders = (this.builders = this.all_builders);
             this.buildLimit = this.c.limit;
+            this.$scope.tags_limit = this.c.tags_limit;
             this.$scope.builds = (this.builds = this.dataAccessor.getBuilds({limit: this.buildLimit, order: '-started_at'}));
             this.$scope.masters = this.dataAccessor.getMasters();
 
@@ -186,8 +191,7 @@ var WaterfallController = (function() {
                         return this.zoomMinus();
                     }
                 };
-                window.bind('keypress', keyHandler);
-                this.$scope.$on('$destroy', function() {
+                return this.$scope.$on('$destroy', function() {
                     window.unbind('keypress', keyHandler);
                     return window.unbind('resize', resizeHandler);
                 });
@@ -731,8 +735,14 @@ var WaterfallController = (function() {
                 }
                 this.$scope.builders = this.builders = ret;
             }
+            if (currentTags !== undefined && currentTags.length) {
+                this.$scope.builders = this.all_builders;
+                this.loadMore();
+            } else {
+                this.$scope.builders = (this.builders = this.dataProcessorService.filterBuilders(this.all_builders));
+            }
             var all_tags = [];
-            for (let builder of this.builders) {
+            for (let builder of this.all_builders) {
                 for (let tag of builder.tags) {
                     if (!all_tags.includes(tag)) {
                         all_tags.push(tag);
